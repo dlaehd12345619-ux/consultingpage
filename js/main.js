@@ -27,26 +27,28 @@ const handleHeader = () => {
   onScroll();
 };
 
-/* ===== Active Nav Link on Scroll ===== */
+/* ===== Floating CTA ===== */
+const handleFloatCta = () => {
+  const cta = document.getElementById('floatCta');
+  if (!cta) return;
+
+  const onScroll = () => {
+    cta.classList.toggle('visible', window.scrollY > 200);
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+};
+
+/* ===== Active Nav Link by URL ===== */
 const handleActiveNav = () => {
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          navLinks.forEach((link) => {
-            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-          });
-        }
-      });
-    },
-    { threshold: 0.4 }
-  );
-
-  sections.forEach((section) => observer.observe(section));
+  const filename = window.location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('.nav-link[href]').forEach((link) => {
+    const href = link.getAttribute('href');
+    link.classList.toggle('active',
+      href === filename || (filename === '' && href === 'index.html')
+    );
+  });
 };
 
 /* ===== Hamburger / Mobile Menu ===== */
@@ -199,4 +201,5 @@ document.addEventListener('DOMContentLoaded', () => {
   handleSmoothScroll();
   handleCounters();
   handleForm();
+  handleFloatCta();
 });
