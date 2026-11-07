@@ -1,3 +1,5 @@
+import { supabase } from './supabase.js';
+
 /* ===== Scroll Animation ===== */
 const observeElements = () => {
   const observer = new IntersectionObserver(
@@ -171,14 +173,63 @@ const handleForm = () => {
     return valid;
   };
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // 서버가 없는 정적 사이트이므로 입력 내용으로 메일 작성 창을 연다.
     const val = (id) => (form.querySelector('#' + id)?.value || '').trim();
     const serviceSel = form.querySelector('#service');
     const serviceText = serviceSel.options[serviceSel.selectedIndex].text;
+    const btn = form.querySelector('.form-submit');
+    const success = form.querySelector('.form-success');
+
+    // 개인정보 수집·이용 동의 확인
+    const consent = form.querySelector('#consent');
+    if (consent && !consent.checked) {
+      showError(consent, '개인정보 수집·이용에 동의해 주세요.');
+      return;
+    }
+    if (consent) clearError(consent);
+
+    // 스팸 봇 차단용 숨김 입력칸: 값이 있으면 저장하지 않고 성공한 것처럼 처리
+    if (val('website')) {
+      form.reset();
+      if (success) { success.style.display = 'block'; success.textContent = '문의가 접수되었습니다.'; }
+      return;
+    }
+
+    // 1) Supabase에 저장
+    if (supabase) {
+      const originalLabel = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = '전송 중...';
+
+      const { error } = await supabase.from('inquiries').insert({
+        school: val('school') || null,
+        name: val('name'),
+        phone: val('phone'),
+        email: val('email') || null,
+        interest: serviceText,
+        message: val('message'),
+        consent: true
+      });
+
+      if (!error) {
+        form.reset();
+        btn.style.display = 'none';
+        if (success) {
+          success.style.display = 'block';
+          success.innerHTML = '<i class="fas fa-check-circle" style="font-size:2rem;margin-bottom:8px;display:block;"></i>문의가 접수되었습니다.<br>확인 후 연락드리겠습니다.';
+        }
+        return;
+      }
+
+      console.error('문의 저장 실패:', error);
+      btn.disabled = false;
+      btn.innerHTML = originalLabel;
+    }
+
+    // 2) 저장소가 없거나 저장에 실패하면 메일 작성 창으로 대체
     const body = [
       `학교/기관명: ${val('school')}`,
       `담당자: ${val('name')}`,
@@ -193,7 +244,6 @@ const handleForm = () => {
     window.location.href =
       `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    const success = form.querySelector('.form-success');
     if (success) {
       success.style.display = 'block';
       success.innerHTML = '메일 작성 창이 열립니다.<br>열리지 않으면 아래 이메일로 직접 보내주세요.';
