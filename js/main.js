@@ -175,20 +175,29 @@ const handleForm = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    const btn = form.querySelector('.form-submit');
+    // 서버가 없는 정적 사이트이므로 입력 내용으로 메일 작성 창을 연다.
+    const val = (id) => (form.querySelector('#' + id)?.value || '').trim();
+    const serviceSel = form.querySelector('#service');
+    const serviceText = serviceSel.options[serviceSel.selectedIndex].text;
+    const body = [
+      `학교/기관명: ${val('school')}`,
+      `담당자: ${val('name')}`,
+      `연락처: ${val('phone')}`,
+      `이메일: ${val('email')}`,
+      `문의 유형: ${serviceText}`,
+      '',
+      val('message')
+    ].join('\n');
+    const subject = `[도입 문의] ${serviceText} - ${val('school') || val('name')}`;
+
+    window.location.href =
+      `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
     const success = form.querySelector('.form-success');
-
-    btn.disabled = true;
-    btn.textContent = '전송 중...';
-
-    setTimeout(() => {
-      form.reset();
-      btn.style.display = 'none';
-      if (success) {
-        success.style.display = 'block';
-        success.innerHTML = '<i class="fas fa-check-circle" style="font-size:2rem;margin-bottom:8px;display:block;"></i>문의가 접수되었습니다.<br>빠른 시일 내에 연락드리겠습니다.';
-      }
-    }, 1000);
+    if (success) {
+      success.style.display = 'block';
+      success.innerHTML = '메일 작성 창이 열립니다.<br>열리지 않으면 아래 이메일로 직접 보내주세요.';
+    }
   });
 };
 
