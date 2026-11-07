@@ -219,6 +219,7 @@ const handleForm = () => {
         btn.style.display = 'none';
         if (success) {
           success.style.display = 'block';
+          success.style.color = '';
           success.innerHTML = '<i class="fas fa-check-circle" style="font-size:2rem;margin-bottom:8px;display:block;"></i>문의가 접수되었습니다.<br>확인 후 연락드리겠습니다.';
         }
         return;
@@ -229,24 +230,14 @@ const handleForm = () => {
       btn.innerHTML = originalLabel;
     }
 
-    // 2) 저장소가 없거나 저장에 실패하면 메일 작성 창으로 대체
-    const body = [
-      `학교/기관명: ${val('school')}`,
-      `담당자: ${val('name')}`,
-      `연락처: ${val('phone')}`,
-      `이메일: ${val('email')}`,
-      `문의 유형: ${serviceText}`,
-      '',
-      val('message')
-    ].join('\n');
-    const subject = `[도입 문의] ${serviceText} - ${val('school') || val('name')}`;
-
-    window.location.href =
-      `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
+    // 2) 저장소가 없거나 저장에 실패한 경우: 메일 앱을 강제로 열지 않고 안내만 표시한다.
+    //    (입력한 내용은 그대로 두어 다시 시도할 수 있다.)
     if (success) {
       success.style.display = 'block';
-      success.innerHTML = '메일 작성 창이 열립니다.<br>열리지 않으면 아래 이메일로 직접 보내주세요.';
+      success.style.color = '#C0392B';
+      success.innerHTML = '문의 접수 중 문제가 발생했습니다.<br>잠시 후 다시 시도하시거나 '
+        + `<a href="mailto:${form.dataset.mailto}" style="text-decoration:underline;">${form.dataset.mailto}</a>`
+        + '로 문의해 주세요.';
     }
   });
 };
